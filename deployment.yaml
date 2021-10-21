@@ -40,7 +40,7 @@ spec:
               memory: "512Mi"
               cpu: "1"
 
-          livenessProbe:
+          livenessProbe: # регулярно проверяем жив ли nginx, если нет, под перезагрузится
             exec:
               command:
                 - /bin/sh
@@ -49,7 +49,7 @@ spec:
             initialDelaySeconds: 60
             periodSeconds: 10
 
-          readinessProbe:
+          readinessProbe: # регулярно проверяем доступность серивиса, если приходит статус-код больше 300 - под перезагрузится
             httpGet:
               scheme: HTTP
               path: /index.html
