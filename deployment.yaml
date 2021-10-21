@@ -1,0 +1,58 @@
+# ================================ Решение тестового задания на позицию SRE ===================================
+# Важно: для получения возможности тестировать данный деплоймент неопределенное приложение было заменено на nginx
+# и пороги по ресурсам выставлены соответствующим образом, все остальные характеристики деплоймента соответствуют
+# требованиям, поставленным для приложения
+
+
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-example-deployment
+spec:
+  replicas: 4
+  selector:
+    matchLabels:
+      app: nginx # пусть для примера это будет nginx
+
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: # согласно документации нулевое число недоступных подов при rolling обновлении доступно только при maxSurge >= 1
+      maxSurge: 1
+      maxUnavailable: 0 
+
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+        - name: nginx
+          image: nginx:latest
+          ports:
+            - containerPort: 8080
+
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "0.6"
+            limits:
+              memory: "512Mi"
+              cpu: "1"
+
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - "[ -f /var/run/nginx.pid] && ps -A grep nginx"
+            initialDelaySeconds: 60
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              scheme: HTTP
+              path: /index.html
+              port: 8080
+            initialDelaySeconds: 60
+            periodSeconds: 10
